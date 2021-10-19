@@ -1,13 +1,31 @@
 import logging
+import json
+import random
 from slack_bolt import App
 from slack_sdk.web import WebClient
 from onboarding_tutorial import OnboardingTutorial
+from question_former import QuestionMaker
 
 
 
 app = App()
 
 onboarding_tutorials_sent = {}
+question_prompts = {}
+
+def start_question(user_id: str, channel: str, client: WebClient):
+    today_question = QuestionMaker(channel,user_id)
+
+    message = today_question.get_message_payload()
+
+    response = client.chat_postMessage(**message)
+
+
+    today_question.timestamp = response["ts"]
+
+    if channel not in question_prompts:
+        question_prompts[channel] = {}
+    question_prompts[channel][user_id] = today_question
 
 
 def start_onboarding(user_id: str, channel: str, client: WebClient):
@@ -113,16 +131,22 @@ def update_pin(event, client):
 # Here we'll link the message callback to the 'message' event.
 @app.event("message")
 def message(event, client):
-    """Display the onboarding welcome message after receiving a message
-    that contains "start".
-    """
+
     channel_id = event.get("channel")
     user_id = event.get("user")
     text = event.get("text")
+    
+    
+    channel_members = []
+    for page in client.conversations_members(channel=channel_id):
+        channel_members = channel_members + page['members']
+    print(channel_members)
+    user_id = random.choice(channel_members)
+    print(user_id)
 
-    if text and text.lower() == "start":
-        return start_onboarding(user_id, channel_id, client)
+    start_question(user_id, channel_id, client)
 
+    
 
 
 if __name__ == "__main__":
