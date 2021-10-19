@@ -17,7 +17,7 @@ class QuestionMaker:
         "text": {
             "type": "mrkdwn",
             "text": (
-                ":Socks: No More socks :( !!! :Socks:"
+                ":Socks: Question Complete!!! :Socks:"
             )
         }
     }
@@ -28,9 +28,10 @@ class QuestionMaker:
         self.players = players
         self.user_id = random.choice(self.players)
         self.username = "TinyTalk"
-        self.icon_emoji = ":robot_face"
+        self.icon_emoji = ":robot_face:"
         self.timestamp = ""
         self.completed = False
+        self.scheduled = False
 
     def get_message_payload(self):
         if self.completed:
@@ -58,6 +59,21 @@ class QuestionMaker:
                 ],
             }
 
+    def get_schedule_message(self, time):
+        return {
+            "channel": self.channel,
+            "username": self.username,
+            "post_at": time,
+            "text": "ok",
+            "blocks": [
+                self.WELCOME_BLOCK,
+                self.DIVIDER_BLOCK,
+                *self._get_user_block(),
+                self.DIVIDER_BLOCK,
+                *self._get_info_block(),
+            ],
+        }
+
     def reroll_player(self):
         #remove current player as they have opted out
         self.players.remove(self.user_id)
@@ -68,6 +84,8 @@ class QuestionMaker:
         # reroll selected player
         self.user_id = random.choice(self.players)
 
+    def is_completed(self):
+        return self.completed
 
     def _get_user_block(self):
         text = (

@@ -69,8 +69,8 @@ class GameMaster:
     def _get_leader_block(self):
         sort_leader = sorted(self.player_scores.items(), key = lambda x:x[1], reverse = True)
         text = (
-            f"""First Place: <@{sort_leader[0][0]}> WITH {sort_leader[0][1]} :Socks:
-            Second Place: <@{sort_leader[1][0]}> WITH {sort_leader[1][1]} :Socks:"""
+            f"""First Place: <@{sort_leader[0][0]}> WITH {sort_leader[0][1]} :Socks: 
+            \n Second Place: <@{sort_leader[1][0]}> WITH {sort_leader[1][1]} :Socks:"""
         )
         return self._get_task_block(text)
     
