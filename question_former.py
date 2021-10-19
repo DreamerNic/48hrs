@@ -18,8 +18,6 @@ class QuestionMaker:
         self.username = "TinyTalk"
         self.icon_emoji = ":robot_face"
         self.timestamp = ""
-        self.reaction_task_completed = False
-        self.pin_task_completed = False
 
     def get_message_payload(self):
         return {
@@ -31,14 +29,23 @@ class QuestionMaker:
                 self.WELCOME_BLOCK,
                 self.DIVIDER_BLOCK,
                 *self._get_user_block(),
+                self.DIVIDER_BLOCK,
+                *self._get_info_block(),
             ],
         }
 
     def _get_user_block(self):
         text = (
-            f"<@{self.user_id}> YOU HAVE BEEN SELECTED"
+            f"<@{self.user_id}> YOU HAVE BEEN SELECTED TO PICK THIS WEEKS :Socks:"
         )
         return self._get_task_block(text)
+
+    def _get_info_block(self):
+        text = (
+            "Todays :Socks: Category is VIDEOS :Clapper:. Post a short video or react with :x: to opt out"
+        )
+        return self._get_task_block(text)
+
 
     @staticmethod
     def _get_task_block(text):
