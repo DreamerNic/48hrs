@@ -74,10 +74,12 @@ def message(event, client):
     if text and text.lower() == "socks":
         players = []
         for page in client.conversations_members(channel=channel_id):
-            players.append(page['members'])
-
-        players.remove(get_bot_id(client))
-
+            players= players + page['members']
+        print(players)
+        bot_id = get_bot_id(client)
+        print(bot_id)
+        if bot_id in players: players.remove(get_bot_id(client))
+        
         todays_player = random.choice(players)
         create_and_send_question(todays_player, channel_id, client)
 
