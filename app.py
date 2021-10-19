@@ -9,8 +9,8 @@ app = App()
 question_ids_by_channel = {} #key: channel_id, value: dict of question_prompts by their timestamp
 
 
-def create_and_send_question(user_id: str, channel: str, client: WebClient):
-    todays_question = QuestionMaker(channel,user_id)
+def create_and_send_question(players: [str], channel: str, client: WebClient):
+    todays_question = QuestionMaker(channel,players)
 
     message = todays_question.get_message_payload()
     response = client.chat_postMessage(**message)
@@ -40,16 +40,7 @@ def handle_x_emoji_reaction(event, client):
     # Get the original tutorial sent.
     question = question_ids_by_channel[channel_id][question_id]
 
-    players = []
-    for page in client.conversations_members(channel=channel_id):
-        players.append(page['members'])
-
-    # remove bot and player that opted out
-    players.remove(get_bot_id(client))
-    players.remove(user_id)
-
-    # reroll selected player
-    question.user_id = random.choice(players)
+    question.reroll_player()
 
     # Get the new message payload
     message = question.get_message_payload()
@@ -79,8 +70,7 @@ def message(event, client):
         bot_id = get_bot_id(client)
         if bot_id in players: players.remove(get_bot_id(client))
         
-        todays_player = random.choice(players)
-        create_and_send_question(todays_player, channel_id, client)
+        create_and_send_question(players, channel_id, client)
 
 
 if __name__ == "__main__":
