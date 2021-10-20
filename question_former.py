@@ -2,22 +2,12 @@ import random
 
 class QuestionMaker:
 
-    WELCOME_BLOCK = {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": (
-                ":Socks: IT'S SOCK TIME!!! :Socks:"
-            )
-        }
-    }
-
     DONE_BLOCK = {
         "type": "section",
         "text": {
             "type": "mrkdwn",
             "text": (
-                ":Socks: Question Complete!!! :Socks:"
+                ":Socks: The sock has returned to its drawer :Socks:"
             )
         }
     }
@@ -25,9 +15,9 @@ class QuestionMaker:
     DIVIDER_BLOCK = {"type": "divider"}
 
     CATEGORIES = [
-    "Ask a Question :Question: \n Post a question for your team", 
-    "Videos :Clapper: \n Post a link to a video/song you enjoy", 
-    "This or That :cat: or :dog: \n Post two topics represented by emojis and let the team vote",
+    "a question :Question: Post a question for your team", 
+    "a video :Clapper: Post a link to a video/song you enjoy", 
+    "a choice :cat:/:dog: Post two emojis to represent topics to vote on",
     ]
 
     def __init__(self, channel, players):
@@ -58,8 +48,7 @@ class QuestionMaker:
                 "username": self.username,
                 "icon_emoji": self.icon_emoji,
                 "blocks": [
-                    self.WELCOME_BLOCK,
-                    self.DIVIDER_BLOCK,
+                    #self.WELCOME_BLOCK,
                     *self._get_user_block(),
                     *self._get_info_block(),
                 ],
@@ -68,12 +57,10 @@ class QuestionMaker:
     def get_schedule_message(self, time):
         return {
             "channel": self.channel,
-            "username": self.username,
             "post_at": time,
             "text": "ok",
             "blocks": [
-                self.WELCOME_BLOCK,
-                self.DIVIDER_BLOCK,
+                #self.WELCOME_BLOCK,
                 *self._get_user_block(),
                 *self._get_info_block(),
             ],
@@ -94,13 +81,13 @@ class QuestionMaker:
 
     def _get_user_block(self):
         text = (
-            f"<@{self.user_id}> You have been chosen to win today's :Socks:"
+            f":Socks: The sock drawer has opened and <@{self.user_id}> has been chosen :socks:"
         )
         return self._get_task_block(text)
 
     def _get_info_block(self):
         text = (
-            f"The category is {random.choice(self.CATEGORIES)} or react with :x: to opt out"
+            f"This sock demands {random.choice(self.CATEGORIES)} \n\n react with :heavy_multiplication_x: to pass"
         )
         return self._get_task_block(text)
 

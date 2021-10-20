@@ -7,7 +7,8 @@ from slack_sdk.web import WebClient
 from question_former import QuestionMaker
 from game_master import GameMaster
 
-app = App()
+app = App(ignoring_self_events_enabled=False)
+bot_id = ""
 game_master = GameMaster([])
 question_ids_by_channel = {} #key: channel_id, value: dict of question_prompts by their timestamp
 current_question_id = 0
@@ -31,20 +32,35 @@ def create_and_send_question(channel: str, client: WebClient):
     global current_question_id
     current_question_id = question_id
 
+    queue_next_question(channel, client)
+
 #when we schedule future messages they do not have a ts (basically message ID yet. 
 #This function will take that message and add it to our question ID's by channel dict.
-def link_message(channel_id: str): 
+def link_message(ts: str, channel_id: str, client: WebClient):
+    global question_ids_by_channel
+
+    current_question_id = ts
+
+    if channel_id not in question_ids_by_channel:
+        question_ids_by_channel[channel_id] = {}
+
+    question_ids_by_channel[channel_id][ts] = question_ids_by_channel[channel_id][0]
+    question_ids_by_channel[channel_id][ts].timestamp = ts
+
+    queue_next_question(channel_id, client)
+    print("linking message")
     return
 
 
 def queue_next_question(channel_id: str, client: WebClient):
+    global next_question
     players = update_player_list(channel_id, client)
 
     schedule_time = int(time.time()) + 60
 
-    next_question = QuestionMaker(channel_id, players)
+    question_ids_by_channel[channel_id][0] = QuestionMaker(channel_id, players)
 
-    message = next_question.get_schedule_message(schedule_time)
+    message = question_ids_by_channel[channel_id][0].get_schedule_message(schedule_time)
     response = client.chat_scheduleMessage(**message)
 
 def send_player_score_message(player: str, channel: str, client: WebClient):
@@ -66,23 +82,23 @@ def handle_x_emoji_reaction(event, client):
     if channel_id not in question_ids_by_channel or question_id not in question_ids_by_channel[channel_id]:
         return
 
-    if reaction != "x":
+    if reaction != "heavy_multiplication_x":
+        game_master.increase_score(user_id, 1)
         return
 
-    # Get the original tutorial sent.
     question = question_ids_by_channel[channel_id][question_id]
+    if (question.user_id == user_id):
+        question.reroll_player()
 
-    question.reroll_player()
+        # Get the new message payload
+        message = question.get_message_payload()
 
-    # Get the new message payload
-    message = question.get_message_payload()
+        # Post the updated message in Slack
+        updated_message = client.chat_update(**message)
 
-    # Post the updated message in Slack
-    updated_message = client.chat_update(**message)
-
-    if (question.completed):
-        current_question_id = None
-        queue_next_question(channel_id, client)
+        if (question.completed):
+            current_question_id = None
+        
 
 
 # ============== Message Events ============= #
@@ -93,10 +109,9 @@ def message(event, client):
     channel_id = event.get("channel")
     user_id = event.get("user")
     text = event.get("text")
-    thread_ts = event.get("thread_ts")
-
-    print(thread_ts)
-
+    ts = event.get("ts")
+    global bot_id
+    global question_ids_by_channel
     if text and text.lower() == "tinytalk":
         create_and_send_question(channel_id, client)
 
@@ -106,29 +121,17 @@ def message(event, client):
     if text and text.lower() == "leader":
         send_leaderboard_message(channel_id, client)
 
-@app.event({
-    "type": "message",
-    "subtype": "bot_message"
-})
-def pickup_bot_message(event, client):
-    channel_id = event.get("channel")
-    bot_id = event.get("bot_id")
-    print(f"BOT MESSAGE from {bot_id}")
+    print(f"user is {user_id} bot id is{bot_id}")
 
+    if(user_id == bot_id and ts not in question_ids_by_channel[channel_id]):
+        print(ts)
+        link_message(ts, channel_id, client)
 
-@app.event({
-    "type": "message",
-    "subtype": "message_replied"
-})
-def thread_message(event, client):
-    channel_id = event.get("channel")
-    user_id = event.get("user")
-    message_id = event.get("item", {}).get("thread_ts")
-    print(message_id)
-
+    game_master.increase_score(user_id, 1)
 
 def update_player_list(channel_id: str, client: WebClient):
     global game_master
+    global bot_id
     players = []
     for page in client.conversations_members(channel=channel_id):
         players= players + page['members']
