@@ -15,9 +15,9 @@ class QuestionMaker:
     DIVIDER_BLOCK = {"type": "divider"}
 
     CATEGORIES = [
-    "a question :Question: Post a question for your team", 
-    "a video :Clapper: Post a link to a video/song you enjoy", 
-    "a choice :cat:/:dog: Post two emojis to represent topics to vote on",
+    "a question :Question: Post a question for your team!", 
+    "a video :Clapper: Post a link to a video/song you enjoy!", 
+    "a choice :cat:/:dog: Post two emojis to represent topics to vote on!",
     ]
 
     def __init__(self, channel, players):
@@ -58,7 +58,7 @@ class QuestionMaker:
         return {
             "channel": self.channel,
             "post_at": time,
-            "text": "ok",
+            "text": "New Prompt",
             "blocks": [
                 #self.WELCOME_BLOCK,
                 *self._get_user_block(),
@@ -87,7 +87,7 @@ class QuestionMaker:
 
     def _get_info_block(self):
         text = (
-            f"This sock demands {random.choice(self.CATEGORIES)} \n\n react with :heavy_multiplication_x: to pass"
+            f"This sock requests a {random.choice(self.CATEGORIES)} \n\n React with :heavy_multiplication_x: to pass."
         )
         return self._get_task_block(text)
 
