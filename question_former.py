@@ -25,9 +25,9 @@ class QuestionMaker:
     DIVIDER_BLOCK = {"type": "divider"}
 
     CATEGORIES = [
-    "Ask a Question :Question: Reply with a question for your team", 
-    "Videos :Clapper: Reply with a link to a video/song you enjoy", 
-    "This or That! Reply with two topics represented by emojis and let the team vote",
+    "Ask a Question :Question: \n Post a question for your team", 
+    "Videos :Clapper: \n Post a link to a video/song you enjoy", 
+    "This or That :cat: or :dog: \n Post two topics represented by emojis and let the team vote",
     ]
 
     def __init__(self, channel, players):

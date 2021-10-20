@@ -10,7 +10,7 @@ from game_master import GameMaster
 app = App()
 game_master = GameMaster([])
 question_ids_by_channel = {} #key: channel_id, value: dict of question_prompts by their timestamp
-scheduled_questions = {}
+current_question_id = 0
 
 def create_and_send_question(channel: str, client: WebClient):
     players = update_player_list(channel, client)
@@ -21,28 +21,31 @@ def create_and_send_question(channel: str, client: WebClient):
     response = client.chat_postMessage(**message)
 
     todays_question.timestamp = response["ts"]
-
+    
     if channel not in question_ids_by_channel:
         question_ids_by_channel[channel] = {}
 
     question_id = todays_question.timestamp #only unique identifier the api returns
     question_ids_by_channel[channel][question_id] = todays_question
 
+    global current_question_id
+    current_question_id = question_id
+
+#when we schedule future messages they do not have a ts (basically message ID yet. 
+#This function will take that message and add it to our question ID's by channel dict.
+def link_message(channel_id: str): 
+    return
+
+
 def queue_next_question(channel_id: str, client: WebClient):
     players = update_player_list(channel_id, client)
 
     schedule_time = int(time.time()) + 60
 
-    print(schedule_time)
-
     next_question = QuestionMaker(channel_id, players)
 
     message = next_question.get_schedule_message(schedule_time)
     response = client.chat_scheduleMessage(**message)
-    
-    #scheduled_questions[channel]
-
-
 
 def send_player_score_message(player: str, channel: str, client: WebClient):
     message = game_master.get_player_score_message(player, channel)
@@ -78,6 +81,7 @@ def handle_x_emoji_reaction(event, client):
     updated_message = client.chat_update(**message)
 
     if (question.completed):
+        current_question_id = None
         queue_next_question(channel_id, client)
 
 
@@ -89,6 +93,9 @@ def message(event, client):
     channel_id = event.get("channel")
     user_id = event.get("user")
     text = event.get("text")
+    thread_ts = event.get("thread_ts")
+
+    print(thread_ts)
 
     if text and text.lower() == "tinytalk":
         create_and_send_question(channel_id, client)
@@ -98,6 +105,27 @@ def message(event, client):
 
     if text and text.lower() == "leader":
         send_leaderboard_message(channel_id, client)
+
+@app.event({
+    "type": "message",
+    "subtype": "bot_message"
+})
+def pickup_bot_message(event, client):
+    channel_id = event.get("channel")
+    bot_id = event.get("bot_id")
+    print(f"BOT MESSAGE from {bot_id}")
+
+
+@app.event({
+    "type": "message",
+    "subtype": "message_replied"
+})
+def thread_message(event, client):
+    channel_id = event.get("channel")
+    user_id = event.get("user")
+    message_id = event.get("item", {}).get("thread_ts")
+    print(message_id)
+
 
 def update_player_list(channel_id: str, client: WebClient):
     global game_master
