@@ -22,7 +22,7 @@ def create_and_send_question(channel: str, client: WebClient):
     response = client.chat_postMessage(**message)
 
     todays_question.timestamp = response["ts"]
-    
+
     if channel not in question_ids_by_channel:
         question_ids_by_channel[channel] = {}
 
@@ -34,7 +34,7 @@ def create_and_send_question(channel: str, client: WebClient):
 
     queue_next_question(channel, client)
 
-#when we schedule future messages they do not have a ts (basically message ID yet. 
+#when we schedule future messages they do not have a ts (basically message ID yet.
 #This function will take that message and add it to our question ID's by channel dict.
 def link_message(ts: str, channel_id: str, client: WebClient):
     global question_ids_by_channel
@@ -44,7 +44,7 @@ def link_message(ts: str, channel_id: str, client: WebClient):
     if channel_id not in question_ids_by_channel:
         question_ids_by_channel[channel_id] = {}
 
-    question_ids_by_channel[channel_id][ts] = question_ids_by_channel[channel_id][0]
+    question_ids_by_channel[channel_id][ts] = copy.deepcopy(question_ids_by_channel[channel_id][0])
     question_ids_by_channel[channel_id][ts].timestamp = ts
 
     queue_next_question(channel_id, client)
@@ -98,7 +98,6 @@ def handle_x_emoji_reaction(event, client):
 
         if (question.completed):
             current_question_id = None
-        
 
 
 # ============== Message Events ============= #
@@ -134,16 +133,16 @@ def update_player_list(channel_id: str, client: WebClient):
     global bot_id
     players = []
     for page in client.conversations_members(channel=channel_id):
-        players= players + page['members']
-    
+        players = players + page['members']
+
     bot_id = get_bot_id(client)
-    if bot_id in players: players.remove(get_bot_id(client))
+    if bot_id in players: players.remove(bot_id)
 
     if game_master is None:
         game_master = GameMaster(players)
     else:
         game_master.update_players(players)
-    return players 
+    return players
 
 def get_bot_id(client):
     test_response = client.auth_test()
